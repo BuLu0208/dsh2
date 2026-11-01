@@ -79,7 +79,8 @@ jobs:
           git apply --verbose ../recipe/patches/host.patch
           git apply --verbose ../recipe/patches/branding.patch
           git apply --verbose ../recipe/patches/fileprompt.patch
-          echo "✓ 三组补丁全部应用"
+          git apply --verbose ../recipe/patches/cwdvar.patch
+          echo "✓ 四组补丁全部应用"
           cp ../recipe/config/env.macos apps/desktop/.env.macos
           echo "✓ .env.macos 就位"
 
