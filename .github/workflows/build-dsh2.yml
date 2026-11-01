@@ -1,0 +1,135 @@
+name: Build 冷夜的 dsh 小作坊
+
+on:
+  workflow_dispatch:
+    inputs:
+      dsh_ref:
+        description: 'DSH source ref (tag/branch/sha)'
+        required: false
+        default: 'master'
+      product_name:
+        description: 'App display name'
+        required: false
+        default: '冷夜的 dsh 小作坊'
+  push:
+    tags:
+      - 'build-*'
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '24.18.1'
+  PNPM_VERSION: '11.28.5'
+  DSH_REPO: 'deepseek-ai/deepseek-harness'
+  PURGE_REPO: 'BuLu0208/dsh-purge1171'
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 150
+    steps:
+      - name: Checkout build recipes
+        uses: actions/checkout@v4
+        with:
+          path: recipe
+
+      - name: Checkout DSH source
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.DSH_REPO }}
+          ref: ${{ inputs.dsh_ref || 'master' }}
+          path: dsh
+          fetch-depth: 1
+
+      - name: Checkout dsh-purge (1.1.71 满血版)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PURGE_REPO }}
+          ref: master
+          path: purge
+          fetch-depth: 1
+
+      - name: Report versions
+        run: |
+          echo "### 版本信息" >> "$GITHUB_STEP_SUMMARY"
+          echo "- DSH: $(node -p "require('./dsh/package.json').version")" >> "$GITHUB_STEP_SUMMARY"
+          echo "- DSH commit: $(git -C dsh rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- purge: $(node -p "require('./purge/package.json').version")" >> "$GITHUB_STEP_SUMMARY"
+          echo "- purge commit: $(git -C purge rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          node -p "require('./purge/package.json').version"
+          node -p "require('./purge/package.json').dshTarget || 'n/a'"
+
+      - name: Apply host patches
+        run: |
+          cd dsh
+          echo "=== 应用 purge host patches ==="
+          git apply --verbose ../recipe/patches/host.patch
+          echo "=== 应用品牌参数化 ==="
+          git apply --verbose ../recipe/patches/branding.patch
+          echo "✓ 补丁全部应用成功"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        working-directory: dsh
+        run: pnpm install --frozen-lockfile
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+          NODE_OPTIONS: '--max-old-space-size=8192'
+
+      - name: Build DSH
+        working-directory: dsh
+        run: pnpm run build
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+
+      - name: Prepare runtime
+        working-directory: dsh
+        env:
+          DSH_DESKTOP_APP_ID: 'com.buluo.dsh2'
+          DSH_DESKTOP_PRODUCT_NAME: ${{ inputs.product_name || '冷夜的 dsh 小作坊' }}
+          DSH_DESKTOP_ARTIFACT_SLUG: 'dsh2'
+          DSH_DESKTOP_URL_SCHEME: 'dsh2'
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        run: pnpm run --filter @deepseek-ai/dsh-desktop prepare:runtime
+
+      - name: Prepare package
+        working-directory: dsh
+        env:
+          DSH_DESKTOP_APP_ID: 'com.buluo.dsh2'
+          DSH_DESKTOP_PRODUCT_NAME: ${{ inputs.product_name || '冷夜的 dsh 小作坊' }}
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        run: pnpm run prepare:desktop
+
+      - name: Package macOS arm64 (unsigned)
+        working-directory: dsh
+        env:
+          DSH_DESKTOP_APP_ID: 'com.buluo.dsh2'
+          DSH_DESKTOP_PRODUCT_NAME: ${{ inputs.product_name || '冷夜的 dsh 小作坊' }}
+          DSH_DESKTOP_ARTIFACT_SLUG: 'dsh2'
+          DSH_DESKTOP_URL_SCHEME: 'dsh2'
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        run: pnpm run package:desktop:mac:arm64:unsigned
+
+      - name: List artifacts
+        run: |
+          find dsh/apps/desktop/dist -type f \( -name '*.dmg' -o -name '*.zip' \) -exec ls -lh {} \;
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsh2-macos-arm64-${{ github.run_number }}
+          path: |
+            dsh/apps/desktop/dist/**/*.dmg
+            dsh/apps/desktop/dist/**/*.zip
+          retention-days: 30
+          if-no-files-found: error
