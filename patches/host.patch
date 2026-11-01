@@ -24,14 +24,6 @@ diff --git a/packages/compaction/compaction-tool-result-pruner/src/index.ts b/pa
 index 5f536bfc..c686d950 100644
 --- a/packages/compaction/compaction-tool-result-pruner/src/index.ts
 +++ b/packages/compaction/compaction-tool-result-pruner/src/index.ts
-@@ -13,7 +13,6 @@ import type { Session, SessionEvent, SessionSeq, ToolResultMessage } from '@deep
- import type {} from '@deepseek-ai/dsh-compaction'
- // Type-only: the `ctx.tokenMeter` Context merge for the declared injection.
- import type {} from '@deepseek-ai/dsh-token-meter'
--import { codePointLength, DEFAULTS, PRUNE_MARKER, resolveConfig } from './config.ts'
- import type {
-   PrunedEntry,
-   PruneResult,
 @@ -81,44 +80,12 @@ export class ToolResultPruner extends Service {
     * @returns pruned content, or `null` when the text is within budget.
     */

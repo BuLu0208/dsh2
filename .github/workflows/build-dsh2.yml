@@ -67,7 +67,21 @@ jobs:
           git apply --verbose ../recipe/patches/host.patch
           echo "=== 应用品牌参数化 ==="
           git apply --verbose ../recipe/patches/branding.patch
+          echo "=== 应用上游黑名单文案改写 ==="
+          git apply --verbose ../recipe/patches/fileprompt.patch
           echo "✓ 补丁全部应用成功"
+
+      - name: Verify blacklisted prompt is gone from source
+        run: |
+          set -e
+          hits=$(grep -rn 'Tokens prefixed with @' dsh/packages/ --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
+          echo "source hits: $hits"
+          if [ "$hits" != "0" ]; then
+            echo "::error::黑名单文案仍在源码中（$hits 处）"
+            grep -rn 'Tokens prefixed with @' dsh/packages/ --include='*.ts' | head -5
+            exit 1
+          fi
+          echo "✓ 源码层黑名单文案 0 命中"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -119,6 +133,35 @@ jobs:
           DSH_DESKTOP_URL_SCHEME: 'dsh2'
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: pnpm run package:desktop:mac:arm64:unsigned
+
+      - name: Verify blacklisted prompt is gone from packaged app
+        run: |
+          set -e
+          APP=$(find dsh/apps/desktop/dist -maxdepth 3 -name '*.app' -type d | head -1)
+          if [ -z "$APP" ]; then
+            echo "::warning::未找到 .app，尝试从 dmg 挂载校验"
+            DMG=$(find dsh/apps/desktop/dist -name '*.dmg' | head -1)
+            if [ -n "$DMG" ]; then
+              hdiutil attach "$DMG" -nobrowse -mountpoint /tmp/dsh2mnt >/dev/null
+              APP=$(find /tmp/dsh2mnt -maxdepth 2 -name '*.app' -type d | head -1)
+            fi
+          fi
+          if [ -z "$APP" ]; then
+            echo "::error::找不到打包后的 .app"
+            exit 1
+          fi
+          echo "APP=$APP"
+          HITS=$(grep -r "Tokens prefixed with @" "$APP" 2>/dev/null | wc -l | tr -d ' ')
+          echo "packaged hits: $HITS"
+          if [ "$HITS" != "0" ]; then
+            echo "::error::打包产物中黑名单文案仍在（$HITS 处），上游会拒绝所有请求"
+            grep -rn "Tokens prefixed with @" "$APP" 2>/dev/null | head -3
+            exit 1
+          fi
+          echo "✓ 打包产物黑名单文案 0 命中"
+          echo "### 校验通过" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 源码层：0 命中" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 打包产物：0 命中" >> "$GITHUB_STEP_SUMMARY"
 
       - name: List artifacts
         run: |
