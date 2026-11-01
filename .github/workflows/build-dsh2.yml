@@ -167,10 +167,38 @@ jobs:
         env:
           DSH_DESKTOP_APP_ID: 'com.buluo.dsh2'
           DSH_DESKTOP_PRODUCT_NAME: ${{ inputs.product_name || '冷夜的 dsh 小作坊' }}
+          DSH_DESKTOP_PACKAGE_NAME: 'dsh2-desktop'
           DSH_DESKTOP_ARTIFACT_SLUG: 'dsh2'
           DSH_DESKTOP_URL_SCHEME: 'dsh2'
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: pnpm run package:desktop:mac:arm64:unsigned
+
+      - name: Verify userData isolation
+        run: |
+          set -e
+          ART=dsh/apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts
+          APP=$(find "$ART" -maxdepth 3 -name '*.app' -type d | head -1)
+          if [ -z "$APP" ]; then echo "::error::找不到 .app"; exit 1; fi
+          echo "APP=$APP"
+          echo "--- Bundle ID ---"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Contents/Info.plist"
+          echo "--- productName (决定 userData 目录) ---"
+          npx --yes @electron/asar extract-file "$APP/Contents/Resources/app.asar" package.json 2>/dev/null || true
+          node - <<'JS'
+          const fs = require('fs')
+          const p = 'package.json'
+          if (!fs.existsSync(p)) { console.error('::error::无法提取 asar 内 package.json'); process.exit(1) }
+          const d = JSON.parse(fs.readFileSync(p, 'utf8'))
+          console.log('  name        =', d.name)
+          console.log('  productName =', d.productName)
+          console.log('  dshDesktopAppId =', d.dshDesktopAppId)
+          const bad = []
+          if (!d.productName) bad.push('productName 缺失 -> userData 会与官方冲突')
+          if (d.name === '@deepseek-ai/dsh-desktop') bad.push('name 与官方相同 -> 单实例锁冲突')
+          if (d.dshDesktopAppId === 'com.deepseek.harness') bad.push('AppID 未覆盖')
+          if (bad.length) { bad.forEach(b => console.error('::error::' + b)); process.exit(1) }
+          console.log('✓ userData 与官方隔离')
+          JS
 
       - name: Verify blacklisted prompt is gone from packaged app
         run: |

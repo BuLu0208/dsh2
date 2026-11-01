@@ -1,17 +1,59 @@
+diff --git a/apps/desktop/scripts/desktop-package-environment.mjs b/apps/desktop/scripts/desktop-package-environment.mjs
+index 27a7f92c..01dfb5d4 100644
+--- a/apps/desktop/scripts/desktop-package-environment.mjs
++++ b/apps/desktop/scripts/desktop-package-environment.mjs
+@@ -21,6 +21,18 @@ const MACOS_SETTING = /^(?:DSH_DESKTOP_MACOS_(?:SIGNING_IDENTITY|TEAM_ID|SIGNATU
+ const AMBIENT_RELEASE_SETTING = /^(?:DSH_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|MANDATORY_UPDATE_.*|WINDOWS_.*|MACOS_.*)|APPLE_.*|(?:WIN_)?CSC_.*|DOWNLOAD_(?:TEST|PROD)_.*)$/iu
+ const FILE_SETTINGS = ['DSH_DESKTOP_WINDOWS_CER_FILE', 'DSH_DESKTOP_WINDOWS_SIGNTOOL', 'APPLE_API_KEY', 'APPLE_KEYCHAIN', 'CSC_LINK']
+ 
++/**
++ * [dsh2] Read the caller's bundle-id override before the ambient release
++ * filter strips it. A repackaged build needs its own identifier so it never
++ * shares LaunchServices metadata with the upstream product.
++ * @param {NodeJS.ProcessEnv} environment Parent environment.
++ * @returns {string | undefined} Requested bundle id, when present and nonempty.
++ */
++function localAppIdOverride(environment) {
++  const value = environment.DSH_DESKTOP_APP_ID
++  return typeof value === 'string' && value.trim() !== '' ? value : undefined
++}
++
+ /**
+  * Select local macOS test defaults without reading dotenv files or inheriting release settings.
+  * @param {NodeJS.ProcessEnv} environment Parent environment, retained for build tools and networking.
+@@ -29,7 +41,10 @@ const FILE_SETTINGS = ['DSH_DESKTOP_WINDOWS_CER_FILE', 'DSH_DESKTOP_WINDOWS_SIGN
+ export function localMacOSPackageEnvironment(environment = process.env) {
+   return {
+     ...Object.fromEntries(Object.entries(environment).filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name))),
+-    DSH_DESKTOP_APP_ID: 'com.deepseek.harness',
++    // [dsh2] A repackaged local build must not inherit the upstream identifier:
++    // the bundle id is what LaunchServices and the update feed key on, so a
++    // second product needs its own. DSH_DESKTOP_APP_ID from the caller wins.
++    DSH_DESKTOP_APP_ID: localAppIdOverride(environment) ?? 'com.deepseek.harness',
+     DSH_DESKTOP_UNSIGNED: '1',
+   }
+ }
 diff --git a/apps/desktop/scripts/electron-builder-config.mjs b/apps/desktop/scripts/electron-builder-config.mjs
-index cf0c19e8..909df56f 100644
+index cf0c19e8..59ff1c50 100644
 --- a/apps/desktop/scripts/electron-builder-config.mjs
 +++ b/apps/desktop/scripts/electron-builder-config.mjs
-@@ -106,7 +106,7 @@ export function createElectronBuilderConfig(
+@@ -106,19 +106,26 @@ export function createElectronBuilderConfig(
    const packaged = resolveDesktopBuildCommit(env)
    return {
      appId,
 -    protocols: [{ name: 'DeepSeek Harness', schemes: ['dsh'] }],
 +    protocols: [{ name: env.DSH_DESKTOP_PRODUCT_NAME ?? 'DeepSeek Harness', schemes: [env.DSH_DESKTOP_URL_SCHEME ?? 'dsh'] }],
      extraMetadata: {
++      // [dsh2] The packaged manifest needs productName and a distinct `name`:
++      // Electron derives app.getPath('userData') and the single-instance lock
++      // from them, so leaving them at the upstream values makes a repackaged
++      // build fight the official app over one profile directory.
++      ...(env.DSH_DESKTOP_PRODUCT_NAME === undefined
++        ? {}
++        : { productName: env.DSH_DESKTOP_PRODUCT_NAME, name: env.DSH_DESKTOP_PACKAGE_NAME ?? 'dsh2-desktop' }),
        dshDesktopAppId: appId,
        dshDesktopUpdateChannel: update?.channel ?? 'nightly',
-@@ -114,11 +114,11 @@ export function createElectronBuilderConfig(
+       ...(policy === undefined ? {} : { dshMandatoryUpdatePolicy: policy }),
        ...buildVersion === productVersion ? {} : { version: buildVersion },
        ...packaged === undefined ? {} : { dshBuildCommit: packaged.commit, dshBuildDirty: packaged.dirty },
      },
