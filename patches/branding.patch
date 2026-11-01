@@ -34,10 +34,10 @@ index 27a7f92c..01dfb5d4 100644
    }
  }
 diff --git a/apps/desktop/scripts/electron-builder-config.mjs b/apps/desktop/scripts/electron-builder-config.mjs
-index cf0c19e8..59ff1c50 100644
+index cf0c19e8..5bd32078 100644
 --- a/apps/desktop/scripts/electron-builder-config.mjs
 +++ b/apps/desktop/scripts/electron-builder-config.mjs
-@@ -106,19 +106,26 @@ export function createElectronBuilderConfig(
+@@ -106,19 +106,34 @@ export function createElectronBuilderConfig(
    const packaged = resolveDesktopBuildCommit(env)
    return {
      appId,
@@ -50,7 +50,15 @@ index cf0c19e8..59ff1c50 100644
 +      // build fight the official app over one profile directory.
 +      ...(env.DSH_DESKTOP_PRODUCT_NAME === undefined
 +        ? {}
-+        : { productName: env.DSH_DESKTOP_PRODUCT_NAME, name: env.DSH_DESKTOP_PACKAGE_NAME ?? 'dsh2-desktop' }),
++        : {
++            productName: env.DSH_DESKTOP_PRODUCT_NAME,
++            name: env.DSH_DESKTOP_PACKAGE_NAME ?? 'dsh2-desktop',
++            // Bake the private Harness home into the signed manifest: the main
++            // process reads it before anything resolves ~/.dsh, so this build
++            // never shares profiles, sessions, or the desktop lock with the
++            // upstream app.
++            ...(env.DSH_DESKTOP_HOME_DIR === undefined ? {} : { dshDesktopHomeDir: env.DSH_DESKTOP_HOME_DIR }),
++          }),
        dshDesktopAppId: appId,
        dshDesktopUpdateChannel: update?.channel ?? 'nightly',
        ...(policy === undefined ? {} : { dshMandatoryUpdatePolicy: policy }),
@@ -583,10 +591,51 @@ index f5d30b82..559015ad 100644
    updateDetail: 'Assim que o download for concluído, você pode instalar a atualização e reiniciar o aplicativo.',
    installAndRestart: 'Instalar e reiniciar',
 diff --git a/apps/desktop/src/main.ts b/apps/desktop/src/main.ts
-index d8d0e30c..6723505b 100644
+index d8d0e30c..7480f185 100644
 --- a/apps/desktop/src/main.ts
 +++ b/apps/desktop/src/main.ts
-@@ -1030,7 +1030,7 @@ async function main(): Promise<void> {
+@@ -3,7 +3,9 @@ import type { ProductEventMap, ProductEvent } from '@deepseek-ai/dsh-client-prod
+ import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
+ /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
+ 
++import { readFileSync } from 'node:fs'
+ import { access, readFile, writeFile } from 'node:fs/promises'
++import { homedir } from 'node:os'
+ import { join } from 'node:path'
+ import { fileURLToPath } from 'node:url'
+ import {
+@@ -86,6 +88,30 @@ let backendReady = false
+ /** Error-level console output of the primary window, attached to crash reports. */
+ const rendererConsole = new RendererConsoleTail()
+ 
++// [dsh2] Claim a private Harness home before anything resolves one. The
++// desktop shell hands `DSH_HOME` to the host child, and every profile, lock,
++// and session path derives from it, so two builds that share the default
++// `~/.dsh` would share profiles, sessions, and the desktop lock. An operator
++// who sets DSH_HOME explicitly keeps their choice; this only supplies the
++// default for a build that declares its own home directory.
++// The home a packaged manifest declares, if any. Reading it through
++// app.getAppPath() keeps the value inside the signed bundle instead of
++// depending on the launching shell's environment.
++function bakedDesktopHomeDir(): string | undefined {
++  try {
++    const manifest = JSON.parse(readFileSync(join(app.getAppPath(), 'package.json'), 'utf8')) as { dshDesktopHomeDir?: unknown }
++    const value = manifest.dshDesktopHomeDir
++    return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined
++  } catch {
++    return undefined
++  }
++}
++const bakedHomeDir = bakedDesktopHomeDir()
++if (bakedHomeDir !== undefined
++  && (process.env.DSH_HOME === undefined || process.env.DSH_HOME.trim() === '')) {
++  process.env.DSH_HOME = join(homedir(), bakedHomeDir)
++}
++
+ // Platform-conventional logs directory (macOS ~/Library/Logs/<name>, otherwise under userData);
+ // set before ready so the first fatal report already resolves under it.
+ app.setAppLogsPath()
+@@ -1030,7 +1056,7 @@ async function main(): Promise<void> {
    const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
      : join(process.resourcesPath, 'icon.png')
    app.setAboutPanelOptions({

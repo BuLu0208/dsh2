@@ -169,6 +169,7 @@ jobs:
           DSH_DESKTOP_APP_ID: 'com.buluo.dsh2'
           DSH_DESKTOP_PRODUCT_NAME: ${{ inputs.product_name || '冷夜的 dsh 小作坊' }}
           DSH_DESKTOP_PACKAGE_NAME: 'dsh2-desktop'
+          DSH_DESKTOP_HOME_DIR: '.dsh2'
           DSH_DESKTOP_ARTIFACT_SLUG: 'dsh2'
           DSH_DESKTOP_URL_SCHEME: 'dsh2'
           NODE_OPTIONS: '--max-old-space-size=8192'
@@ -197,6 +198,8 @@ jobs:
           if (!d.productName) bad.push('productName 缺失 -> userData 会与官方冲突')
           if (d.name === '@deepseek-ai/dsh-desktop') bad.push('name 与官方相同 -> 单实例锁冲突')
           if (d.dshDesktopAppId === 'com.deepseek.harness') bad.push('AppID 未覆盖')
+          if (d.dshDesktopHomeDir !== '.dsh2') bad.push('dshDesktopHomeDir 不是 .dsh2 -> DSH home 会与官方共用')
+          console.log('  dshDesktopHomeDir =', d.dshDesktopHomeDir)
           if (bad.length) { bad.forEach(b => console.error('::error::' + b)); process.exit(1) }
           console.log('✓ userData 与官方隔离')
           JS
