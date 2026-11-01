@@ -1,3 +1,42 @@
+diff --git a/apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts b/apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts
+index 331e51e7..22ddc914 100644
+--- a/apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts
++++ b/apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts
+@@ -184,7 +184,7 @@ describe('Python SDK dsh profile keyless smoke', () => {
+         expect(toolNames.includes('str_replace_editor')).toBe(editorEnabled)
+         expect(toolNames).not.toContain('list_subagent_models')
+       }
+-      for (const text of ['Tokens prefixed with @', 'Prefer showing the primary results',
++      for (const text of ['A path written as @', 'Prefer showing the primary results',
+         'Time sampled while preparing']) {
+         expect(requestText.includes(text), text).toBe(true)
+       }
+diff --git a/packages/context/file-reference-local/README.md b/packages/context/file-reference-local/README.md
+index 04669af8..c2981789 100644
+--- a/packages/context/file-reference-local/README.md
++++ b/packages/context/file-reference-local/README.md
+@@ -106,7 +106,7 @@ When the addressed agent has an effective `read` tool, the provider contributes
+ ##### File-reference instruction
+ 
+ ```markdown
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ ```
+ 
+ #### Token effect
+diff --git a/packages/context/file-reference-local/README.zh.md b/packages/context/file-reference-local/README.zh.md
+index 319dbab0..14932cce 100644
+--- a/packages/context/file-reference-local/README.zh.md
++++ b/packages/context/file-reference-local/README.zh.md
+@@ -106,7 +106,7 @@ agent（智能体）及宿主 UI 可以用各 agent 本地工作区中经过排
+ ##### 文件引用指令
+ 
+ ```markdown
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ ```
+ 
+ #### Token 影响
 diff --git a/packages/context/file-reference/src/index.ts b/packages/context/file-reference/src/index.ts
 index d6b30e78..6527141f 100644
 --- a/packages/context/file-reference/src/index.ts
@@ -23,3 +62,208 @@ index d6b30e78..6527141f 100644
  
  declare module '@deepseek-ai/cordis' {
    interface Context {
+diff --git a/snapshots/sdk/background-wait-steer/system-prompt.expected.md b/snapshots/sdk/background-wait-steer/system-prompt.expected.md
+index c1ca181a..40a96f6d 100644
+--- a/snapshots/sdk/background-wait-steer/system-prompt.expected.md
++++ b/snapshots/sdk/background-wait-steer/system-prompt.expected.md
+@@ -2,7 +2,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/sdk/command-attachments/system-prompt.expected.md b/snapshots/sdk/command-attachments/system-prompt.expected.md
+index 834f1512..73f5f701 100644
+--- a/snapshots/sdk/command-attachments/system-prompt.expected.md
++++ b/snapshots/sdk/command-attachments/system-prompt.expected.md
+@@ -15,7 +15,7 @@ Make the plan decision-complete: state the goal and success criteria; group impl
+ When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+ 
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/sdk/desktop-context/system-prompt.expected.md b/snapshots/sdk/desktop-context/system-prompt.expected.md
+index c1ca181a..40a96f6d 100644
+--- a/snapshots/sdk/desktop-context/system-prompt.expected.md
++++ b/snapshots/sdk/desktop-context/system-prompt.expected.md
+@@ -2,7 +2,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/sdk/desktop-ptc-context/system-prompt.expected.md b/snapshots/sdk/desktop-ptc-context/system-prompt.expected.md
+index dc171a50..e1524101 100644
+--- a/snapshots/sdk/desktop-ptc-context/system-prompt.expected.md
++++ b/snapshots/sdk/desktop-ptc-context/system-prompt.expected.md
+@@ -4,7 +4,7 @@ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+ `run_code` is the only tool you can call directly — a tool call naming any other tool fails. Reach every tool the SDK declares below from inside the program.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/sdk/plan-review/system-prompt.expected.md b/snapshots/sdk/plan-review/system-prompt.expected.md
+index b6ec866e..f1836e66 100644
+--- a/snapshots/sdk/plan-review/system-prompt.expected.md
++++ b/snapshots/sdk/plan-review/system-prompt.expected.md
+@@ -2,7 +2,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+@@ -51,7 +51,7 @@ Make the plan decision-complete: state the goal and success criteria; group impl
+ When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+ 
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+@@ -87,7 +87,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+@@ -136,7 +136,7 @@ Make the plan decision-complete: state the goal and success criteria; group impl
+ When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+ 
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+@@ -172,7 +172,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/web/cordis-tool-round/system-prompt.expected.md b/snapshots/web/cordis-tool-round/system-prompt.expected.md
+index 26358da7..b4b7767a 100644
+--- a/snapshots/web/cordis-tool-round/system-prompt.expected.md
++++ b/snapshots/web/cordis-tool-round/system-prompt.expected.md
+@@ -2,7 +2,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/web/creation-recommendations/system-prompt.expected.md b/snapshots/web/creation-recommendations/system-prompt.expected.md
+index 7422c4a7..5672f391 100644
+--- a/snapshots/web/creation-recommendations/system-prompt.expected.md
++++ b/snapshots/web/creation-recommendations/system-prompt.expected.md
+@@ -2,7 +2,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/web/fresh-round-trip/system-prompt.expected.md b/snapshots/web/fresh-round-trip/system-prompt.expected.md
+index 7422c4a7..5672f391 100644
+--- a/snapshots/web/fresh-round-trip/system-prompt.expected.md
++++ b/snapshots/web/fresh-round-trip/system-prompt.expected.md
+@@ -2,7 +2,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/web/official-subagent-bundle/system-prompt.expected.md b/snapshots/web/official-subagent-bundle/system-prompt.expected.md
+index edf1d3d6..02a54340 100644
+--- a/snapshots/web/official-subagent-bundle/system-prompt.expected.md
++++ b/snapshots/web/official-subagent-bundle/system-prompt.expected.md
+@@ -4,7 +4,7 @@ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+ `run_code` is the only tool you can call directly — a tool call naming any other tool fails. Reach every tool the SDK declares below from inside the program.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/web/optional-string-editor/system-prompt.expected.md b/snapshots/web/optional-string-editor/system-prompt.expected.md
+index df3f92ed..4c1935f1 100644
+--- a/snapshots/web/optional-string-editor/system-prompt.expected.md
++++ b/snapshots/web/optional-string-editor/system-prompt.expected.md
+@@ -4,7 +4,7 @@ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+ `run_code` is the only tool you can call directly — a tool call naming any other tool fails. Reach every tool the SDK declares below from inside the program.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/web/plugin-recommendations/system-prompt.expected.md b/snapshots/web/plugin-recommendations/system-prompt.expected.md
+index 7422c4a7..5672f391 100644
+--- a/snapshots/web/plugin-recommendations/system-prompt.expected.md
++++ b/snapshots/web/plugin-recommendations/system-prompt.expected.md
+@@ -2,7 +2,7 @@ You are an AI agent powered by DeepSeek Harness.
+ 
+ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/web/ptc-round/system-prompt.expected.md b/snapshots/web/ptc-round/system-prompt.expected.md
+index 7354d014..2ac49c60 100644
+--- a/snapshots/web/ptc-round/system-prompt.expected.md
++++ b/snapshots/web/ptc-round/system-prompt.expected.md
+@@ -4,7 +4,7 @@ You are a coding agent powered by the deepseek-v4-flash model.
+ 
+ `run_code` is the only tool you can call directly — a tool call naming any other tool fails. Reach every tool the SDK declares below from inside the program.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
+diff --git a/snapshots/web/schedule-catalog/system-prompt.expected.md b/snapshots/web/schedule-catalog/system-prompt.expected.md
+index 047836d8..5097d907 100644
+--- a/snapshots/web/schedule-catalog/system-prompt.expected.md
++++ b/snapshots/web/schedule-catalog/system-prompt.expected.md
+@@ -6,7 +6,7 @@ You are interacting with the user through the DeepSeek Harness Web GUI whose URL
+ 
+ You are a coding agent powered by the deepseek-v4-flash model. Your working directory is {{cwd}}.
+ 
+-Tokens prefixed with @ are paths the user explicitly referenced. Relative paths resolve from the workspace root; absolute paths identify files or directories on the host. A trailing slash marks a directory: list it when its contents matter. Anything else is a file: use the read tool when its contents are needed, and do not claim to have inspected it before reading. @"..." quotes a path containing spaces.
++A path written as @something is an item the user pointed at explicitly. A relative path starts from the workspace root; an absolute path points somewhere on the host. A trailing slash means the item is a folder, so list it when the contents matter. Anything else counts as a file: read it first, and never describe what is inside before actually reading it. If a path contains spaces, wrap it in at-quotes (an @ followed by the quoted path).
+ 
+ Check the [exit code: N] marker on every bash result; investigate failures before moving on.
+ 
