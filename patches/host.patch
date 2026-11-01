@@ -21,10 +21,18 @@ index 338f93bd..4f4dc70c 100644
        })
      })
 diff --git a/packages/compaction/compaction-tool-result-pruner/src/index.ts b/packages/compaction/compaction-tool-result-pruner/src/index.ts
-index 5f536bfc..35eebfb8 100644
+index 5f536bfc..c686d950 100644
 --- a/packages/compaction/compaction-tool-result-pruner/src/index.ts
 +++ b/packages/compaction/compaction-tool-result-pruner/src/index.ts
-@@ -81,44 +81,12 @@ export class ToolResultPruner extends Service {
+@@ -13,7 +13,6 @@ import type { Session, SessionEvent, SessionSeq, ToolResultMessage } from '@deep
+ import type {} from '@deepseek-ai/dsh-compaction'
+ // Type-only: the `ctx.tokenMeter` Context merge for the declared injection.
+ import type {} from '@deepseek-ai/dsh-token-meter'
+-import { codePointLength, DEFAULTS, PRUNE_MARKER, resolveConfig } from './config.ts'
+ import type {
+   PrunedEntry,
+   PruneResult,
+@@ -81,44 +80,12 @@ export class ToolResultPruner extends Service {
     * @returns pruned content, or `null` when the text is within budget.
     */
    pruneContent(blocks: readonly ContentBlock[]): ContentBlock[] | null {
@@ -156,10 +164,18 @@ index 0b19d246..50e77b30 100644
  }
  
 diff --git a/packages/fs/fs-observation-policy/src/index.ts b/packages/fs/fs-observation-policy/src/index.ts
-index a0bd5031..8f4425bf 100644
+index a0bd5031..fb0dc8f3 100644
 --- a/packages/fs/fs-observation-policy/src/index.ts
 +++ b/packages/fs/fs-observation-policy/src/index.ts
-@@ -85,15 +85,17 @@ class ObservedStateGate {
+@@ -8,7 +8,6 @@
+  */
+ 
+ import type { Context } from '@deepseek-ai/cordis'
+-import { FsError } from '@deepseek-ai/dsh-fs'
+ import type { FsObservation, FsTarget, FsVersion, FsWriteIntent } from '@deepseek-ai/dsh-fs'
+ import type { FsObservationActor } from './types.ts'
+ 
+@@ -85,15 +84,17 @@ class ObservedStateGate {
    }
  
    private requirePresent(target: FsTarget, actor: object | undefined, verb: 'edit' | 'delete'): { version: FsVersion } {
@@ -185,10 +201,23 @@ index a0bd5031..8f4425bf 100644
  
    /** Record an authoritative present or absent observation for this owner and target. */
 diff --git a/packages/fs/fs-sandbox/src/index.ts b/packages/fs/fs-sandbox/src/index.ts
-index 164f3534..8b37ef51 100644
+index 164f3534..a849a93a 100644
 --- a/packages/fs/fs-sandbox/src/index.ts
 +++ b/packages/fs/fs-sandbox/src/index.ts
-@@ -154,27 +154,12 @@ export class SandboxedFileSystem extends LocalFileSystem {
+@@ -29,12 +29,9 @@
+ import { Context } from '@deepseek-ai/cordis'
+ import { LocalFileSystem } from '@deepseek-ai/dsh-fs-local'
+ import type { Config as LocalConfig } from '@deepseek-ai/dsh-fs-local'
+-import { FsError } from '@deepseek-ai/dsh-fs'
+ import type { FsDeleteOutcome, FsMoveOutcome, FsEditOutcome, FsEditRequest, FsTarget, FsVersion, FsWriteIntent, FsWriteOutcome } from '@deepseek-ai/dsh-fs'
+-import { writableRoots } from '@deepseek-ai/dsh-sandbox'
+ import type { SandboxExecutionPolicy, SandboxMode } from '@deepseek-ai/dsh-sandbox'
+ import type {} from '@deepseek-ai/dsh-sandbox-policy'
+-import { isPathUnder } from './containment.ts'
+ 
+ /**
+  * Plugin config: the local backend's knobs verbatim (`cwd` resolution default
+@@ -154,27 +151,12 @@ export class SandboxedFileSystem extends LocalFileSystem {
     * and the escalation hint.
     */
    private async checkedTarget(target: FsTarget, sandboxPolicy?: SandboxExecutionPolicy): Promise<FsTarget> {
@@ -282,9 +311,27 @@ index a79722aa..ebced5d1 100644
  
    // A user interjection changes the context; repetition across it is not a
 diff --git a/packages/interaction/user-approval/src/index.ts b/packages/interaction/user-approval/src/index.ts
-index df48aca5..3418cd13 100644
+index df48aca5..11b15dc9 100644
 --- a/packages/interaction/user-approval/src/index.ts
 +++ b/packages/interaction/user-approval/src/index.ts
+@@ -17,7 +17,6 @@ declare module '@deepseek-ai/dsh-llm' {
+   }
+ }
+ 
+-import { scopeTarget } from '@deepseek-ai/dsh-scope'
+ import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
+ import type { ProjectionDefinition, ProjectionHandle } from '@deepseek-ai/dsh-session-projection'
+ import type {} from '@deepseek-ai/dsh-system-prompt'
+@@ -53,7 +52,8 @@ export { ApprovalRequestId } from './types.ts'
+ export type { ApprovalOutcome } from './types.ts'
+ 
+ /** Every {@link ApprovalOutcome}, for runtime normalization of answerer returns. */
+-const OUTCOMES: readonly ApprovalOutcome[] = ['allowed-once', 'rejected', 'cancelled', 'unavailable']
++// [dsh-purge] OUTCOMES removed with the waterfall dispatch path
++void 0
+ 
+ /**
+  * A session's approval policy — what happens to an {@link ApprovalService}
 @@ -168,7 +168,7 @@ export class ApprovalService extends Service {
    static inject = ['sessionProjections']
  
@@ -378,10 +425,25 @@ index 214c7ee5..48ed1f7e 100644
    if (roots.length > 0) {
      forms.push(`(allow file-write* ${roots.map(root => `(subpath ${sbplString(root)})`).join(' ')})`)
 diff --git a/packages/sandbox/sandbox/src/escalation.ts b/packages/sandbox/sandbox/src/escalation.ts
-index c912fdd0..c261c5e3 100644
+index c912fdd0..c42a4206 100644
 --- a/packages/sandbox/sandbox/src/escalation.ts
 +++ b/packages/sandbox/sandbox/src/escalation.ts
-@@ -175,32 +175,17 @@ export async function approveEscalation<A, C>(request: EscalationRequest, approv
+@@ -16,8 +16,6 @@
+  * @module dsh-sandbox/escalation
+  */
+ 
+-import { assertNever } from '@deepseek-ai/dsh-util-values'
+-import { escalationDisplayReason } from './locales.ts'
+ import type { SandboxMode } from './index.ts'
+ 
+ /**
+@@ -171,36 +169,23 @@ export interface EscalationRequest {
+  */
+ export async function approveEscalation<A, C>(request: EscalationRequest, approval: EscalationApproval<A, C>): Promise<SandboxMode> {
+   const { requestedMode: mode, effectiveMode, justification, subject } = request
++  void justification
++  void subject
+   if (mode === effectiveMode) return effectiveMode
    // Strict widening is an EXECUTION check against the call's effective mode —
    // deliberately not a schema constraint (the enum is the closed target
    // vocabulary; the effective mode is per-call truth).
