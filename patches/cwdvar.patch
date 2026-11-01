@@ -1,8 +1,8 @@
 diff --git a/packages/core/agent-loop/src/index.ts b/packages/core/agent-loop/src/index.ts
-index 381ef6e9..0ecbf8ab 100644
+index 381ef6e9..ae37ce71 100644
 --- a/packages/core/agent-loop/src/index.ts
 +++ b/packages/core/agent-loop/src/index.ts
-@@ -336,6 +336,22 @@ export class AgentLoop extends Service implements AgentFactory {
+@@ -336,6 +336,30 @@ export class AgentLoop extends Service implements AgentFactory {
      ctx.effect(() => ctx.agents.setFactory(this), 'agentLoop.setFactory()')
      ctx.systemPrompt.variable('provider', context => context.modelSelection?.provider ?? context.agent?.options.provider)
      ctx.systemPrompt.variable('model', context => context.modelSelection?.model ?? context.agent?.options.model)
@@ -15,12 +15,20 @@ index 381ef6e9..0ecbf8ab 100644
 +    // from the session header's validated cwd and falls back to the deployment
 +    // default. It is also synchronous and side-effect free: the renderer must
 +    // never await, and an undefined value is itself a hard error.
++    // The working-directory service is looked up by name rather than through
++    // the typed Context, because this package does not depend on it: a plugin
++    // prompts `{{cwd}}` and the renderer treats an unregistered name as a hard
++    // error, so the variable must exist whether or not that service mounts.
 +    ctx.systemPrompt.variable('cwd', (context) => {
-+      const session = context.agent?.session
-+      if (session === undefined) return process.cwd()
-+      // The service may mount after this registration; read it lazily.
-+      const service = ctx.get('workingDirectory') as { get?: (session: typeof session) => string } | undefined
-+      return typeof service?.get === 'function' ? service.get(session) : process.cwd()
++      const agent = context.agent as unknown as { session?: object } | undefined
++      if (agent?.session === undefined) return process.cwd()
++      try {
++        const directory = ctx.get('workingDirectory') as unknown as
++          { get(target: object): string } | undefined
++        return directory?.get(agent.session) ?? process.cwd()
++      } catch {
++        return process.cwd()
++      }
 +    })
  
      for (const { id, sessionId, cwd, resumeSessionId, ...options } of this.config.agents) {
