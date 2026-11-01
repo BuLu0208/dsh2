@@ -205,10 +205,30 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dsh2-macos-arm64-${{ github.run_number }}
+          # 精确路径：upload-artifact 的 ** 不匹配点开头的目录（.desktop-build）
           path: |
-            dsh/apps/desktop/.desktop-build/**/unsigned-artifacts/*.dmg
-            dsh/apps/desktop/.desktop-build/**/unsigned-artifacts/*.zip
-            dsh/apps/desktop/.desktop-build/**/*.dmg
-            dsh/apps/desktop/.desktop-build/**/*.zip
-          retention-days: 30
-          if-no-files-found: warn
+            dsh/apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts/*.dmg
+            dsh/apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts/*.zip
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish to release
+        if: startsWith(github.ref, 'refs/tags/build-')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: dsh2 ${{ env.DSH_VER }} (${{ github.ref_name }})
+          tag_name: ${{ github.ref_name }}
+          body: |
+            **冷夜的 dsh 小作坊** — 基于 DeepSeek Harness `${{ env.DSH_VER }}` (${{ env.DSH_SHA }})
+
+            - 内置：冷夜的全能破甲助手 (dsh-purge 1.1.71 满血版)
+            - 品牌：冷夜的 dsh 小作坊 / com.buluo.dsh2 / dsh2://
+            - 数据目录：`~/.dsh2`（与官方版完全隔离）
+            - 未签名，首次打开需右键 → 打开
+
+            校验：源码层与打包产物中黑名单文案均 0 命中。
+          files: |
+            dsh/apps/desktop/.desktop-build/targets/mac-arm64/unsigned-artifacts/*.dmg
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
