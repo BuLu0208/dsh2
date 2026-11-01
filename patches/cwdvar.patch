@@ -1,8 +1,8 @@
 diff --git a/packages/core/agent-loop/src/index.ts b/packages/core/agent-loop/src/index.ts
-index 381ef6e9..7544eb30 100644
+index 381ef6e9..0ecbf8ab 100644
 --- a/packages/core/agent-loop/src/index.ts
 +++ b/packages/core/agent-loop/src/index.ts
-@@ -336,6 +336,14 @@ export class AgentLoop extends Service implements AgentFactory {
+@@ -336,6 +336,22 @@ export class AgentLoop extends Service implements AgentFactory {
      ctx.effect(() => ctx.agents.setFactory(this), 'agentLoop.setFactory()')
      ctx.systemPrompt.variable('provider', context => context.modelSelection?.provider ?? context.agent?.options.provider)
      ctx.systemPrompt.variable('model', context => context.modelSelection?.model ?? context.agent?.options.model)
@@ -10,10 +10,18 @@ index 381ef6e9..7544eb30 100644
 +    // against the older prompt surface interpolate `{{cwd}}` in their sections
 +    // (dsh-purge's personaSuffix is the canonical case) and a missing name is a
 +    // hard assembly error, so an unregistered variable breaks every turn.
-+    // Resolve to the process workspace when the session carries no cwd: the
-+    // renderer treats an undefined value as a hard error, and an unanswered
-+    // variable must never fail a whole turn.
-+    ctx.systemPrompt.variable('cwd', context => context.agent?.options.meta?.cwd ?? process.cwd())
++    //
++    // The value comes from the working-directory projection, which initialises
++    // from the session header's validated cwd and falls back to the deployment
++    // default. It is also synchronous and side-effect free: the renderer must
++    // never await, and an undefined value is itself a hard error.
++    ctx.systemPrompt.variable('cwd', (context) => {
++      const session = context.agent?.session
++      if (session === undefined) return process.cwd()
++      // The service may mount after this registration; read it lazily.
++      const service = ctx.get('workingDirectory') as { get?: (session: typeof session) => string } | undefined
++      return typeof service?.get === 'function' ? service.get(session) : process.cwd()
++    })
  
      for (const { id, sessionId, cwd, resumeSessionId, ...options } of this.config.agents) {
        const meta = cwd === undefined ? {} : { cwd }
