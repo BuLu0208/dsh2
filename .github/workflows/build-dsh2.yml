@@ -113,10 +113,10 @@ jobs:
             ~/Library/pnpm/store
             ~/.local/share/pnpm/store
             dsh/node_modules/.cache
-          key: pnpm-${{ runner.os }}-${{ env.CACHE_REV }}-${{ hashFiles('dsh/pnpm-lock.yaml') }}
+          key: pnpm-macOS-${{ env.CACHE_REV }}-${{ hashFiles('dsh/pnpm-lock.yaml') }}
           restore-keys: |
-            pnpm-${{ runner.os }}-${{ env.CACHE_REV }}-
-            pnpm-${{ runner.os }}-
+            pnpm-macOS-${{ env.CACHE_REV }}-
+            pnpm-macOS-
 
       # ── 缓存 2：构建产物（tsc 增量 + tsdown 输出） ──
       - name: Cache DSH build outputs
@@ -128,7 +128,10 @@ jobs:
             dsh/**/dist
             dsh/**/lib
             dsh/**/*.tsbuildinfo
-          key: dshbuild-${{ runner.os }}-${{ env.CACHE_REV }}-${{ env.DSH_SHA }}-${{ hashFiles('recipe/patches/*.patch') }}
+          key: dshbuild-macOS-${{ env.CACHE_REV }}-${{ env.DSH_SHA }}-${{ hashFiles('recipe/patches/*.patch') }}
+          restore-keys: |
+            dshbuild-macOS-${{ env.CACHE_REV }}-${{ env.DSH_SHA }}-
+            dshbuild-macOS-${{ env.CACHE_REV }}-
 
       # ── 缓存 3：Electron 下载与解包 ──
       - name: Cache Electron
@@ -137,9 +140,9 @@ jobs:
           path: |
             ~/Library/Caches/electron
             dsh/apps/desktop/.desktop-build/downloads
-          key: electron-${{ runner.os }}-${{ hashFiles('dsh/apps/desktop/package.json') }}
+          key: electron-macOS-${{ hashFiles('dsh/apps/desktop/package.json') }}
           restore-keys: |
-            electron-${{ runner.os }}-
+            electron-macOS-
 
       - name: Install dependencies
         working-directory: dsh
@@ -158,24 +161,6 @@ jobs:
       - name: Build DSH (cache hit, skip)
         if: ${{ inputs.skip_build || steps.cache-build.outputs.cache-hit == 'true' }}
         run: echo "✓ 复用已缓存的构建产物，跳过编译"
-
-      - name: Prepare runtime
-        working-directory: dsh
-        env:
-          DSH_DESKTOP_APP_ID: 'com.buluo.dsh2'
-          DSH_DESKTOP_PRODUCT_NAME: ${{ inputs.product_name || '冷夜的 dsh 小作坊' }}
-          DSH_DESKTOP_ARTIFACT_SLUG: 'dsh2'
-          DSH_DESKTOP_URL_SCHEME: 'dsh2'
-          NODE_OPTIONS: '--max-old-space-size=8192'
-        run: pnpm run --filter @deepseek-ai/dsh-desktop prepare:runtime
-
-      - name: Prepare package
-        working-directory: dsh
-        env:
-          DSH_DESKTOP_APP_ID: 'com.buluo.dsh2'
-          DSH_DESKTOP_PRODUCT_NAME: ${{ inputs.product_name || '冷夜的 dsh 小作坊' }}
-          NODE_OPTIONS: '--max-old-space-size=8192'
-        run: pnpm run prepare:desktop
 
       - name: Package macOS arm64 (unsigned)
         working-directory: dsh
